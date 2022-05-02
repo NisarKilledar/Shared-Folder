@@ -1,20 +1,21 @@
 select distinct 
 sales_order,
 ret_order_no,
---ret_line_key,
+ret_line_key,
 item_id,
 alias_value,
---ret_org_qty,
+ret_org_qty,
 ret_unit_price,
 ret_units,
 city, state, country, short_zip_code,
-draft_created as return_creation_date,
-in_transit as return_dropoff_date, 
+draft_created, 
+in_transit, 
 carrier_delivered, 
-created as return_processing_date,
---ROUND((to_date(SYSDATE) - draft_created),1) hold_time,
-case when carrier_delivered IS NULL then ROUND((to_date(SYSDATE) - in_transit),1) else NULL end as Carrier_return_backlog_age,
-ROUND((to_date(SYSDATE) - carrier_delivered),1) FC_return_backlog_age
+created,
+(in_transit - draft_created) customer_hold_time,
+(carrier_delivered - in_transit) transportation_time,
+(created - carrier_delivered) FC_return_processing_time,
+(created - in_transit) TransFc_return_processing_time
 from(
     select 
     distinct ret_date,
@@ -83,8 +84,9 @@ from(
         )
     )
 )
-where draft_created IS NOT NULL and created IS NULL and in_transit IS NOT NULL
-and draft_created between to_date('30-jan-22') and to_date('30-apr-22')
---and draft_created = to_date(sysdate-1)
+where created between to_date('31-jan-21') and to_date('29-jan-22')
+and draft_created IS NOT NULL
+and in_transit IS NOT NULL
+AND created IS NOT NULL
 ;
 
